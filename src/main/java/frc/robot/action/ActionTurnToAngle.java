@@ -7,19 +7,23 @@ public class ActionTurnToAngle implements Action {
 	
 	double fSetpoint; //final setpoint to feed to controller
 	double iSetpoint;
-	boolean firstRun;
+	boolean firstRun = true;
 	boolean relativeYaw;
 	int counter = 0;
 	float tolerance;
 	boolean pivot;
 	double pivotPower;
 	boolean pivotDirection;
+	//we added these two things today 
+	double angleToTurn = 180;
+	double errorDivisor;
 	
 	public ActionTurnToAngle(double setpoint, boolean relative, float tolerance) { //pivot is assumed false
 		this(setpoint, relative, tolerance, false, 1, false);
 	}
 	
 	public ActionTurnToAngle(double setpoint, boolean relative, float tolerance, boolean pivot, double pivotPower, boolean pivotDirection) {
+		this.angleToTurn = setpoint;
 		firstRun = true;
 		this.tolerance = tolerance;
 		iSetpoint = setpoint;
@@ -32,7 +36,7 @@ public class ActionTurnToAngle implements Action {
 	@Override
 	public void run() {
 		
-		if(firstRun) {
+		/*if(firstRun) {
 			double theta = Robot.navX.getYaw();
 			fSetpoint = relativeYaw ? theta+iSetpoint : iSetpoint;
 			
@@ -45,13 +49,13 @@ public class ActionTurnToAngle implements Action {
 			}
 			
 			SmartDashboard.putNumber("Auto NavX Setpoint", fSetpoint);
-			//Robot.navX.setSetpoint(fSetpoint);
+			Robot.navX.setSetpoint(fSetpoint);
 			Robot.navX.turnController.enable();
 		}
 		
-		//double output = Robot.navX.getPidOutput();
+		double output = Robot.navX.getPidOutput();
 		
-	/*	if(pivot) {
+		if(pivot) {
 			if(pivotDirection) {
 				Robot.drivebase.drive(-pivotPower*output, output);
 			}
@@ -61,18 +65,64 @@ public class ActionTurnToAngle implements Action {
 		} else {
 			Robot.drivebase.drive(-output, output);	
 		}
+		*/
+
+
+		//0.6
+		//0.55
+		//0.55
+		 
+		/* original code
+		double error = 90 - Robot.navX.getYaw();
+		double power = Math.pow(error/60, 0.666);
+		power = 0.666 * power;
+		power = Math.min(power, 0.55);
 		
-		SmartDashboard.putNumber("NavX PID Output", output);
+		Robot.drivebase.drive(power, -power);
+		*/
 		
-		firstRun = false;*/
+		if (Math.abs(angleToTurn) < 45){
+			errorDivisor = 28;
+		}
+		else{
+			errorDivisor = 60;
+		}
+		
+
+		double divisor = SmartDashboard.getNumber("NavX Divisor", 60);
+		double exponent = SmartDashboard.getNumber("NavX Exponent", 0.66);
+
+
+		double error = angleToTurn - Robot.navX.getYaw();
+		double power = Math.pow(Math.abs(error)/errorDivisor, 0.66);
+		power = 0.55 * power;
+		power = Math.min(power, 0.55);
+		power = Math.copySign(power, error);
+
+
+		SmartDashboard.putNumber("NavX Power", power);
+		SmartDashboard.putNumber("NavX Error", error);
+
+		Robot.drivebase.drive(power, -power);	
+
+
+		//SmartDashboard.putNumber("NavX PID Output", output);
+		
+		firstRun = false;
 	}
 	
 	@Override
 	public boolean isFinished() {
 		double yaw = Robot.navX.getYaw();
 		double setpoint = Robot.navX.turnController.getSetpoint();
-		boolean end = ((yaw<=setpoint+tolerance) && (yaw>=setpoint-tolerance));
+		setpoint = -setpoint;
+		
+		
+		boolean end = Math.abs(yaw - setpoint) <= tolerance;		
 		boolean end2 = false;
+		
+		SmartDashboard.putBoolean("Ended", end);
+
 	
 		if(end) {
 			counter++;
@@ -86,12 +136,15 @@ public class ActionTurnToAngle implements Action {
 			end2 = false;
 		}
 		
-		if(end2) {
-			firstRun = true;
+		if(end) {
+			//firstRun = true;
 			Robot.navX.turnController.disable();
 		}
-		
-		return end2;
+
+		SmartDashboard.putBoolean("End", end);
+		boolean end3 = Math.abs(Math.abs(angleToTurn) - Math.abs(yaw)) <= tolerance;		
+
+		return end3;
 	}
 	
 }

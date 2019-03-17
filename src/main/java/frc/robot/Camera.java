@@ -13,7 +13,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 public class Camera {
 
     static final double pixelPerDegreeConstant = 0.146875;
-    static final double offsetConstant = 10;
+    public static double offsetConstant = 10;
     static final double FIELD_OF_VIEW_RAD = 70.42 * Math.PI /180.0;
     static final double FOCAL_LENGTH_PIXELS = (640 / 2) / Math.tan(FIELD_OF_VIEW_RAD / 2.0);
     
@@ -23,11 +23,12 @@ public class Camera {
     public double angle = 0;
     public boolean firstRun = true;
     public int visionDirection = 0;
-    int numValid = 0;
+    public int numValid = 0;
     static NetworkTableInstance inst;
     static NetworkTable visionTable;
     private static NetworkTableEntry visionStringArrEntry;
     public boolean dumbVision = false;
+    public boolean leftBtn = false;
 
     public boolean turnConfirmed = false;
     public boolean turningRight = false;
@@ -63,7 +64,7 @@ public class Camera {
             else {visionDirection = 3; }
         }
 
-        if (!dumbVision) {
+        if (leftBtn) {
             visionDirection = 0;
         }
 
@@ -85,7 +86,14 @@ public class Camera {
     }
     
     public int getDesiredHeading(boolean turnLess) {
-        int[] testHeadings = {0,-90, 90, -61, -151, 61, 151, 180, -180};
+
+        int[] testHeadings = {0,-90, 90, -151, 151};
+        if (leftBtn) {
+            testHeadings = new int[] {180, -180, 20, -20};
+        }
+
+
+
         int leastHeadingIndex = 0;
         double leastHeading = 300;
         double currentHeading = Robot.navX.getYaw();
@@ -103,8 +111,14 @@ public class Camera {
                 leastHeadingIndex = i;
             }
         }
+
+        if (testHeadings[leastHeadingIndex] == -180) {
+            return 180;
+        }
+
         return testHeadings[leastHeadingIndex];
     }
+
 
     public double getCameraDegreeOffset() {
         return angle;
@@ -123,7 +137,6 @@ public class Camera {
     }
     
     public double getPixelOffset(double differenceInHeading) {
-        //Offset from target 
         double inchesOffset = distance * Math.tan(Math.toRadians(differenceInHeading));     
         double pixelOffset = inchesOffset * (width / 8);
         return pixelOffset;
@@ -177,9 +190,8 @@ public class Camera {
                 valid.add(new int[][] {arr[i]});
             }
         }
-
         SmartDashboard.putNumber("IND Valid Contours", valid.size());
-        
+
         Arrays.sort(arr, new Comparator<int[]>() {
             public int compare(int[] entry1, int[] entry2) {
                 final int val1 = entry1[0];

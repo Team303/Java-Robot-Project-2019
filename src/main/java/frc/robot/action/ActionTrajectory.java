@@ -36,9 +36,10 @@ import edu.wpi.first.wpilibj.DriverStation;
     private EncoderFollower rightFollower;
     private boolean isFirst = true;
 
+
     Notifier notifier;
 
-    public static int counter = 0;
+    public int counter = 0;
     public int offset = 0;
     public int leftEncoder = 0;
     public int rightEncoder = 0;
@@ -53,18 +54,20 @@ import edu.wpi.first.wpilibj.DriverStation;
         this.turningConstant = turningConstant;
         this.reversed = reversed;
 
-
-        notifier = new Notifier(()->{
-            leftEncoder = Robot.drivebase.getLeftEncoder();
+        /*notifier = new Notifier(()->{
+            /*leftEncoder = Robot.drivebase.getLeftEncoder();
             rightEncoder = Robot.drivebase.getRightEncoder();
     
             if (reversed) {
                 leftEncoder = -Robot.drivebase.getRightEncoder();
                 rightEncoder = -Robot.drivebase.getLeftEncoder();
             }
-        
-            double leftSpeed = leftFollower.calculate(Robot.drivebase.getLeftEncoder());
-            double rightSpeed = rightFollower.calculate(Robot.drivebase.getRightEncoder());
+
+            EncoderFollower leftFollower = Robot.path.trajectoryMap.get(trajectoryName)[0];
+            EncoderFollower rightFollower = Robot.path.trajectoryMap.get(trajectoryName)[];
+
+            double leftSpeed = leftFollower.calculate(leftEncoder);
+            double rightSpeed = rightFollower.calculate(rightEncoder);
     
             if (reversed) {
                 leftSpeed = -leftSpeed;
@@ -75,20 +78,34 @@ import edu.wpi.first.wpilibj.DriverStation;
             double desired_heading = Pathfinder.r2d(leftFollower.getHeading());
             double heading_difference = Pathfinder.boundHalfDegrees(desired_heading - heading);
             double turn =  turningConstant * heading_difference;
-    
-            
+            turn = 0;
+
+            double left = leftSpeed + turn;
+            double right = rightSpeed - turn;
+            left = 0.7 * left;
+            right = 0.7 * right;
+
+            System.out.println("Left: " + left);
+            System.out.println("Left Encoder: " + leftEncoder);
+            System.out.println("Right: " + right);
+            System.out.println("Right Encoder: " + rightEncoder);
             //turn = 0;        
             if (reversed) {
-                Robot.drivebase.drive(rightSpeed + turn, leftSpeed - turn);
+                Robot.drivebase.drive(right, left);
             } else {
-                Robot.drivebase.drive(leftSpeed + turn, rightSpeed - turn);
+                Robot.drivebase.drive(left, right);
             }
 
             if(!DriverStation.getInstance().isAutonomous() || DriverStation.getInstance().isDisabled()) {
 				notifier.stop();
-			}
+            }
+            
+            boolean finished2 = leftFollower.isFinished() && rightFollower.isFinished();
+            if(finished2) {
+				notifier.stop();
+            }
 
-        });
+        });*/
     }
 
     public void initTrajectories() { // dont be rowdy
@@ -101,31 +118,74 @@ import edu.wpi.first.wpilibj.DriverStation;
         leftFollower = new EncoderFollower(leftTrajectory);
         rightFollower = new EncoderFollower(rightTrajectory);
     
-        leftFollower.configureEncoder(Robot.drivebase.getLeftEncoder(), k_ticks_per_rev, k_wheel_diameter);
-        rightFollower.configureEncoder(Robot.drivebase.getRightEncoder(), k_ticks_per_rev, k_wheel_diameter);
+        SmartDashboard.putNumber("Initial Left", Robot.drivebase.getLeftEncoder());
+        SmartDashboard.putNumber("Initial Right", Robot.drivebase.getRightEncoder());
 
-        
-        // You must tune the PID values on the following line!
-        leftFollower.configurePIDVA(0.95, 0, 0, 1 / 12.0, 0);
-        // You must tune the PID values on the following line!
-        rightFollower.configurePIDVA(0.95,  0, 0, 1 / 12.0, 0);
+        leftFollower.configureEncoder(0, k_ticks_per_rev, k_wheel_diameter);
+        rightFollower.configureEncoder(0, k_ticks_per_rev, k_wheel_diameter);
+
+        double p = SmartDashboard.getNumber("NavX P", 0.95);
+        leftFollower.configurePIDVA(p, 0, 0, 1 / 10.0, 0);
+        rightFollower.configurePIDVA(p,  0, 0, 1 / 10.0, 0);
+
+        //notifier.startPeriodic(0.02);
+
     }
 
     public void run() {
         if (isFirst) {
-            Robot.navX.zeroYaw();
+            //Robot.navX.zeroYaw();
             Robot.drivebase.zeroEncoders();
             initTrajectories();
-            notifier.startPeriodic(0.02);
             isFirst = false;
         }
+
+
+        
+
+        leftEncoder = Robot.drivebase.getLeftEncoder();
+        rightEncoder = Robot.drivebase.getRightEncoder();
+    
+            if (reversed) {
+                leftEncoder = -Robot.drivebase.getRightEncoder();
+                rightEncoder = -Robot.drivebase.getLeftEncoder();
+            }
+
+            double leftSpeed = leftFollower.calculate(leftEncoder);
+            double rightSpeed = rightFollower.calculate(rightEncoder);
+    
+            if (reversed) {
+                leftSpeed = -leftSpeed;
+                rightSpeed = -rightSpeed;
+            }
+    
+            double heading = Robot.navX.getYaw();
+            double desired_heading = Pathfinder.r2d(leftFollower.getHeading());
+            double heading_difference = Pathfinder.boundHalfDegrees(desired_heading - heading);
+            double turn =  turningConstant * heading_difference;
+            turn = 0;
+
+            double left = leftSpeed + turn;
+            double right = rightSpeed - turn;
+            left = 0.7 * left;
+            right = 0.7 * right;
+
+            System.out.println("Left: " + left);
+            System.out.println("Left Encoder: " + leftEncoder);
+            System.out.println("Right: " + right);
+            System.out.println("Right Encoder: " + rightEncoder);
+            //turn = 0;        
+            if (reversed) {
+                Robot.drivebase.drive(right, left);
+            } else {
+                Robot.drivebase.drive(left, right);
+            }
         
     }
 
     public boolean isFinished() {
         boolean finished = leftFollower.isFinished() && rightFollower.isFinished();
 		if(finished) {
-			notifier.stop();
 		}
 		return finished;
     }

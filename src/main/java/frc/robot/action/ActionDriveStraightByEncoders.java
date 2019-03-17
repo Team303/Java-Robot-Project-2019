@@ -37,7 +37,7 @@ public class ActionDriveStraightByEncoders implements Action {
 
 		//call drive straight - returns a double array with first index as left POWER, and second index as right POWER
 		//driveStraight(power, angle difference, tuning constant)
-		double[] pow = Action.driveStraight(power, Robot.navX.getYaw()-initalYaw, 0.01);
+		double[] pow = Action.driveStraight(power, Robot.navX.getYaw()-initalYaw, 0.005);
 		Robot.drivebase.drive(pow[0], pow[1]);		
 	}
 

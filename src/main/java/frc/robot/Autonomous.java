@@ -12,6 +12,10 @@ import frc.robot.action.ActionDriveStraightByEncoders;
 import frc.robot.action.ActionWait;
 import frc.robot.action.ActionDriveToGoalByWidth;
 import frc.robot.action.ActionExtend;
+import frc.robot.action.ActionLift;
+import frc.robot.action.ActionParallelAction;
+import frc.robot.action.ActionTurnToAngle;
+import frc.robot.action.ActionDelayedAction;
 
 public class Autonomous {
 
@@ -40,9 +44,12 @@ public class Autonomous {
 			taskNum = 0;
 			Robot.camera.visionDirection = 0;
 			Robot.camera.turnConfirmed = false;
-			driveToTarget(100, Robot.camera.getDesiredHeading(false));
+			driveToTarget(125, Robot.camera.getDesiredHeading(false));
 			teleopFirst = false;
 		}
+		
+		SmartDashboard.putBoolean("STOP VISION", (Robot.camera.getWidth() > 200));
+
 
 
 		run();
@@ -73,19 +80,50 @@ public class Autonomous {
 		//double inputPower=SmartDashboard.getNumber("Input Power", 0.6);
 		//arr.add(new ActionDriveStraightByEncoders(28000, inputPower));
 		//arr.add(new ActionDriveStraightByEncoders(28000, inputPower));
-		arr.add(new ActionTrajectory("Straight", 0, 0.02, false));
+		///arr.add(new ActionTrajectory("Straight", 0, 0.02, false));
+		//arr.add(new ActionWait(99999999));
 		arr.add(new ActionWait(99999999));
+
+		
 	}
 
 
 	public void assembleForward() {
-		arr.add(new ActionDriveStraightByEncoders(30000, 0.65));
+		//arr.add(new ActionDriveStraightByEncoders(30000, 0.65));
+		//arr.add(new ActionTurnToAngle(-84, false, 20.0f));
+		//arr.add(new ActionTrajectory("Straight", 0, 0, false));
+		//arr.add(new ActionDriveStraightByEncoders(30000, 0.65));
+		//arr.add(new ActionDriveToGoalByWidth(120, -20, 1));
+		//arr.add(new ActionParallelAction(new ActionWait(1.0), new ActionLift(RobotMap.MID_HATCH_SETPOINT)));
+		//arr.add(new ActionDeploy(true));
+		
+		//arr.add(new ActionTrajectory("SecondBack", 0, 0, false));
+		//arr.add(new ActionTurnToAngle(180, false, 10.0f));
+		
+		
+		/*arr.add(new ActionDriveStraightByEncoders(10000, 0.45));
+		arr.add(new ActionWait(0.1));
+		arr.add(new ActionTrajectory("Straight", 0, 0, false));
+		arr.add(new ActionDriveToGoalByWidth(120, -20.5, 1));
+		arr.add(new ActionTurnToAngle(-20, false, 5.0f));
+		//arr.add(new ActionParallelAction(new ActionWait(1.2), new ActionLift(28000)));
+		arr.add(new ActionParallelAction(new ActionTrajectory("Back", 0, 0, true), new ActionDelayedAction(0.5, new ActionLift(0))));
+		arr.add(new ActionTurnToAngle(180, false, 5.0f));
+		arr.add(new ActionDriveToGoalByWidth(200, 180, 1));
+		arr.add(new ActionParallelAction(new ActionWait(1.0), new ActionLift(18000)));
+		arr.add(new ActionParallelAction(new ActionTrajectory("ForwardNew", 0, 0, true), new ActionDelayedAction(1.0, new ActionLift(0))));
+		arr.add(new ActionWait(99999));*/
+
+
+
+
 	}
+
 
 
 	public void assembleCenterOneHatch() {
 		arr.add(new ActionDriveStraightByEncoders(30000, 0.6));
-		arr.add(new ActionDriveToGoalByWidth(100, 0, 1));
+		arr.add(new ActionDriveToGoalByWidth(100, -61.5, 1));
 		launchPanel();
 	}
 
@@ -115,9 +153,44 @@ public class Autonomous {
 	public void launchPanel() {
 		arr.add(new ActionExtend(true));
 		arr.add(new ActionDeploy(true));
-		arr.add(new ActionWait(1.0));
+		arr.add(new ActionWait(13.0));
 		arr.add(new ActionExtend(false));
 		arr.add(new ActionDeploy(false));
+	}
+
+
+	
+	public void assembleOneRocketHatchLeft() {
+		arr.add(new ActionDriveStraightByEncoders(10000, 0.45));
+		arr.add(new ActionWait(0.1));
+		arr.add(new ActionTrajectory("Straight", 0, 0, false));
+		arr.add(new ActionDriveToGoalByWidth(120, -20.5, 1));
+		arr.add(new ActionTurnToAngle(-20, false, 5.0f));
+		arr.add(new ActionWait(0.5));
+		arr.add(new ActionExtend(true));
+		arr.add(new ActionDeploy(false));
+		arr.add(new ActionWait(99999));
+
+	}
+
+
+	public void assembleTwoRocketHatchLeft() {
+		arr.add(new ActionWait(0.5));
+		arr.add(new ActionDriveStraightByEncoders(10000, 0.45));
+		arr.add(new ActionWait(0.1));
+		arr.add(new ActionTrajectory("Straight", 0, 0, false));
+		arr.add(new ActionParallelAction(new ActionDriveToGoalByWidth(150, -20.5, 1), new ActionLift(2000)));
+		arr.add(new ActionTurnToAngle(-20.5, false, 5.0f));
+		//arr.add(new ActionParallelAction(new ActionWait(1.2), new ActionLift(28000)));
+		arr.add(new ActionExtend(true));
+		arr.add(new ActionParallelAction(new ActionWait(0.6), new ActionDeploy(false)));
+		arr.add(new ActionParallelAction(new ActionTrajectory("Back", 0, 0, true), new ActionDelayedAction(0.5, new ActionLift(0))));
+		arr.add(new ActionTurnToAngle(180, false, 5.0f));
+		arr.add(new ActionDriveToGoalByWidth(300, 180, 1));
+		arr.add(new ActionDeploy(true));
+		arr.add(new ActionParallelAction(new ActionWait(0.5), new ActionLift(10000)));
+		arr.add(new ActionParallelAction(new ActionTrajectory("ForwardNew", 0, 0, true), new ActionDelayedAction(1.0, new ActionLift(0))));
+		arr.add(new ActionWait(99999));
 	}
 
 

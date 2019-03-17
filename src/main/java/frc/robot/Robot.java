@@ -39,7 +39,7 @@ import frc.robot.action.ActionWait;
 public class Robot extends IterativeRobot {
 
   public static enum Position {LEFT, CENTER, RIGHT};
-  public static enum Auto {DO_NOTHING, DRIVER_CONTROL, ONE_HATCH, TWO_HATCH, ROCKET, FORWARD};
+  public static enum Auto {DO_NOTHING, DRIVER_CONTROL, ONE_HATCH, TWO_HATCH, ONE_ROCKET, TWO_ROCKET, FORWARD};
 
   public static Drivebase drivebase;
   public static NavX navX;
@@ -50,6 +50,9 @@ public class Robot extends IterativeRobot {
   public static Camera camera;
   public static Climber climber;
   public static Timer timer;
+  public static Path path;
+
+  public boolean navXControl = false;
 
   public static boolean rocketLift = false;
   public static int highSetpoint;
@@ -76,14 +79,22 @@ public class Robot extends IterativeRobot {
     navX = new NavX();
     auto = new Autonomous();
     camera = new Camera();
+    path = new Path();
     compressor = new Compressor();
     climber = new Climber();
     drivebase.zeroEncoders();
     timer = new Timer();
     SmartDashboard.putNumber("Time Push", 0.25);
+    SmartDashboard.putNumber("NavX P", 0.65019);
+    SmartDashboard.putNumber("NavX I", 0.00);
+    SmartDashboard.putNumber("NavX D", 0.00);
 
     lift.zeroEncoders();
     navX.zeroYaw();    
+
+    SmartDashboard.putNumber("NavX Divisor", 60);
+		SmartDashboard.putNumber("NavX Exponent", 0.66);
+
     
 
     positionChooser.addOption("Left", Position.LEFT);
@@ -113,16 +124,21 @@ public class Robot extends IterativeRobot {
       intake.setWristSetpoint(0);
     }
 
+
+
     updateDashboard();
   }
 
   @Override
   public void autonomousInit() {
 
+    intake.snipNotifier.startPeriodic(0.001);
+
     compressor.setClosedLoopControl(false);
     compressor.stop();
-
+    Robot.navX.zeroYaw();
     autoControlA = true;
+
 
     Position position = positionChooser.getSelected();
 
@@ -133,6 +149,7 @@ public class Robot extends IterativeRobot {
     } else if (position == Position.CENTER) {
       assembleCenterAutos();
     }
+    //auto.assembleForward();
 
   }
 
@@ -143,8 +160,8 @@ public class Robot extends IterativeRobot {
     else if (selected == Auto.DRIVER_CONTROL) {autoControlA = false;}
     else if (selected == Auto.ONE_HATCH) {auto.assembleRightOneHatch();}
     else if (selected == Auto.TWO_HATCH) {}
-    else if (selected == Auto.ROCKET) {}
-
+    else if (selected == Auto.ONE_ROCKET) {auto.assembleOneRocketHatchLeft();}
+    else if (selected == Auto.TWO_ROCKET) {auto.assembleTwoRocketHatchLeft();}
     auto.arr.add(new ActionWait(9999));
 
   }
@@ -156,8 +173,8 @@ public class Robot extends IterativeRobot {
     else if (selected == Auto.DRIVER_CONTROL) {autoControlA = false;}
     else if (selected == Auto.ONE_HATCH) {auto.assembleCenterOneHatch();}
     else if (selected == Auto.TWO_HATCH) {}
-    else if (selected == Auto.ROCKET) {}
-
+    else if (selected == Auto.ONE_ROCKET) {}
+    else if (selected == Auto.TWO_ROCKET) {}
     auto.arr.add(new ActionWait(9999));
 
   }
@@ -169,10 +186,16 @@ public class Robot extends IterativeRobot {
     else if (selected == Auto.DRIVER_CONTROL) {autoControlA = false;}
     else if (selected == Auto.ONE_HATCH) {}
     else if (selected == Auto.TWO_HATCH) {}
-    else if (selected == Auto.ROCKET) {}  
+    else if (selected == Auto.ONE_ROCKET) {}  
     auto.arr.add(new ActionWait(9999));
 
-  
+    //HUE: 34-182
+    //SAT:0-255
+    //VAL:34-255
+    
+
+
+
   }
 
   @Override
@@ -195,15 +218,16 @@ public class Robot extends IterativeRobot {
 
  @Override
   public void teleopInit() {
-    
     super.teleopInit();
     compressor.setClosedLoopControl(true);
+    //compressor.stop();
+
     autoControlT = false;
     auto.arr.clear();
-    Robot.navX.zeroYaw();
     timer.reset();
     timer.start();
     Robot.lift.setSetpoint(0);
+
   }
 
   /**
@@ -214,18 +238,21 @@ public class Robot extends IterativeRobot {
 
     OI.update();
 
+
     if (OI.lBtn[6] || OI.rBtn[6]) {
-      autoControlT = true;
-      if (OI.rBtn[6]) {
-        Robot.camera.dumbVision = true;
-      } else {
-        Robot.camera.dumbVision = false;
+      if (OI.lBtn[6]) {
+        camera.leftBtn = true;
+      } else if (OI.rBtn[6]) {
+        camera.leftBtn = false;
       }
+      autoControlT = true;
     } else {
       auto.teleopFirst = true;
       auto.taskNum = 100;
       autoControlT = false;
     }
+
+    SmartDashboard.putBoolean("Left BTN", camera.leftBtn);
 
     if (autoControlT) {
       auto.control();
@@ -239,6 +266,8 @@ public class Robot extends IterativeRobot {
     OI.update();
     updateDashboard();
     camera.updateVision();
+		SmartDashboard.putBoolean("STOP VISION", (Robot.camera.getWidth() > 200));
+
 
     double driveAlter = (-Math.abs(1-((Robot.lift.getMainEncoder() + 230000)/225000.0))) + 1;
     double lDrivePower = (OI.lBtn[7]) ? -OI.leftY : -OI.leftY*driveAlter;
@@ -248,18 +277,65 @@ public class Robot extends IterativeRobot {
     intake.control();
     lift.control();
 
+    /*double p = SmartDashboard.getNumber("NavX P", 0.65019);
+    double i = SmartDashboard.getNumber("NavX I", 0.00);
+    double d = SmartDashboard.getNumber("NavX D", 0.00);
+
+    Robot.navX.turnController.setP(p);
+    Robot.navX.turnController.setI(i);
+    Robot.navX.turnController.setD(d);*/
+
+
     double adjustment = SmartDashboard.getNumber("Adjustment", 0.8);
-    if ((Math.abs(OI.leftY) > 0.1) || (Math.abs(OI.rightY) > 0.1)) {
-      drivebase.drive(adjustment * lDrivePower,  adjustment * rDrivePower);
+
+    if (OI.lPov != 90)  {
+      if (navXControl) {
+        navXControl = false;
+      }
+      if ((Math.abs(OI.leftY) > 0.1) || (Math.abs(OI.rightY) > 0.1)) {
+        drivebase.drive(adjustment * lDrivePower,  adjustment * rDrivePower);
+      } else {
+       drivebase.drive(0,0);
+      }
     } else {
-     drivebase.drive(0,0);
+      navXControl = true;
+      if (pulse(navXControl)) {
+        navX.setSetpoint(20);
+        navX.turnController.enable();
+      }
+
+      double output = navX.getPidOutput();
+      drivebase.drive(-output, output);
+
     }
+    
+    
+  }
+
+  boolean disabledState;
+
+  public boolean pulse(boolean input) {
+    if (input) {
+      if (!disabledState) {
+        disabledState = true;
+        return true;
+      }
+
+      return false;
+
+    }
+
+    disabledState = false;
+    return false;
+
   }
 
 
   public void updateDashboard() {
     SmartDashboard.putNumber("NavX Yaw", navX.getYaw());
-    
+    SmartDashboard.putNumber("Right Encoder", Robot.drivebase.getRightEncoder());
+    SmartDashboard.putNumber("Left Encoder", Robot.drivebase.getLeftEncoder());
+
     int direction = Robot.camera.visionDirection;
     String status = "";
     if (direction == 0) { status = "Not Set"; }

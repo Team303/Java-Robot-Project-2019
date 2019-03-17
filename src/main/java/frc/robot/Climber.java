@@ -53,22 +53,21 @@ public class Climber {
 
     public void control() {
        
-        System.out.println("OI: " +  OI.xRightTrigger);
-
         if (OI.xRightTrigger >= 0.75) {
             climberDown = true;
             if (OI.xBtnStart) {
                 if (!deployed) {
-                    setFront(true);
+                    setBack(true);
                     deployTimer.reset();
                     deployTimer.start();
                     deployed = true;
                     SmartDashboard.putBoolean("Time On", false);
                 }
 
-                if (deployTimer.get() > SmartDashboard.getNumber("Time Push", 0.25) && deployed == true) {
+
+                if (deployTimer.get() > 0.2 && deployed == true) {
+                    setFront(true);
                     SmartDashboard.putBoolean("Time On", true);
-                    setBack(true);
                 }
             } 
             

@@ -46,13 +46,13 @@ public class RobotMap {
     public static final int CLIMBER_TRACTOR = 9;
     public static final boolean CLIMBER_TRACTOR_INV = false;
 
-    public static final int LOW_ROCKET_SETPOINT = 14000;
-    public static final int MID_ROCKET_SETPOINT = 47261;
-    public static final int HIGH_ROCKET_SETPOINT = 74311;
+    public static final int LOW_ROCKET_SETPOINT = 10285;
+    public static final int MID_ROCKET_SETPOINT = 36094;
+    public static final int HIGH_ROCKET_SETPOINT = 55857;
 
-    public static final int LOW_HATCH_SETPOINT = 0;
-    public static final int MID_HATCH_SETPOINT = 34094;
-    public static final int HIGH_HATCH_SETPOINT = 64406;
+    public static final int LOW_HATCH_SETPOINT = 1800;
+    public static final int MID_HATCH_SETPOINT = 29142;
+    public static final int HIGH_HATCH_SETPOINT = 50000;
 
     public static final int WRIST_GROUND_SETPOINT = 32085; //Dont Know Yet
     public static final int WRIST_CARGO_SETPOINT = 22204; //Dont Know Yet

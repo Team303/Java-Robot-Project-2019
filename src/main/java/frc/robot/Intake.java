@@ -15,9 +15,11 @@ import com.revrobotics.CANEncoder;
 import com.revrobotics.CANPIDController;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Spark;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PWMTalonSRX;
+import edu.wpi.first.wpilibj.Notifier;
 
 
 /**
@@ -34,8 +36,14 @@ public class Intake {
     private CANEncoder wristEncoder;
 
    // private PWMTalonSRX cargoIntake;
-   private WPI_TalonSRX cargoIntake;
+    private WPI_TalonSRX cargoIntake;
     private int wristSetpoint = 0;
+
+    private boolean snipSnipped = false;
+    private boolean started = false;
+    public Notifier snipNotifier;
+
+    private Timer snipTimer;
 
     public CANPIDController wristPID;
 
@@ -43,19 +51,19 @@ public class Intake {
         //prac is 1,2,3,4
         //comp is 4,5
         deploy1 = new Solenoid(4);
-       // deploy2 = new Solenoid(1);
+        //deploy2 = new Solenoid(1);
     
         extend1 = new Solenoid(5);
-        //extend2 = new Solenoid(5);
-
-
+        //extend2 = new Solenoid(3);
 
         wrist = new CANSparkMax(8, MotorType.kBrushless);
         //cargoIntake = new PWMTalonSRX(1);
         cargoIntake = new WPI_TalonSRX(11);
         cargoIntake.setInverted(true);
 
+        
 
+        snipTimer = new Timer();
 
         wristPID = wrist.getPIDController();
         wristEncoder = wrist.getEncoder();
@@ -66,10 +74,31 @@ public class Intake {
         wristPID.setI(0);
         wristPID.setD(0);
 
-        //wristPID.setOutputRange(0, 0.6);
         zeroWristEncoder();
         deploy(false);
         extend(false);
+        snipSnipped = false;
+        started = false;
+
+        snipNotifier = new Notifier(()->{
+            if (!snipSnipped) {
+        
+                if (!started) {
+                    snipTimer.reset();
+                    snipTimer.start();
+                    started = true;
+                }
+    
+                extend(true);
+    
+                if (snipTimer.get() > 0.05 && started) {
+                    deploy(true);
+                    snipNotifier.stop();
+                    snipSnipped = true;
+                }
+            }
+
+        });
     }
 
     public void deploy(boolean state) {
@@ -119,10 +148,10 @@ public class Intake {
         } else if (OI.lBtn[5]){
             extend(false);
         }
-
-        if (OI.rBtn[2]) {
+ 
+        if (OI.rBtn[2] || OI.lBtn[1]) {
             deploy(true); 
-        } else if (OI.rBtn[5]) {
+        } else if (OI.rBtn[5] || OI.rBtn[1]) {
             deploy(false);
         }
 
@@ -148,5 +177,32 @@ public class Intake {
             setWristSetpoint(wristSetpoint + 400);
         }
 
+        SmartDashboard.putNumber("Intake Current", cargoIntake.getOutputCurrent());
+        
+        
+
     }
+
+
+    public void checkIfIntakeCargo() {
+
+
+        int threshold = 20;
+
+        if (cargoIntake.getOutputCurrent() > threshold) {
+            //Intake the ball
+        }
+
+
+    }
+
+    public void snipSnip() {
+
+        
+        
+        
+
+    }
+
+
 }
