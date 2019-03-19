@@ -175,21 +175,24 @@ public class Autonomous {
 
 
 	public void assembleTwoRocketHatchLeft() {
-		arr.add(new ActionWait(0.5));
+		//arr.add(new ActionWait(0.5)); //200000
 		arr.add(new ActionDriveStraightByEncoders(10000, 0.45));
 		arr.add(new ActionWait(0.1));
+		//arr.add(new ActionTurnToAngle(0, false, 5.0f));
 		arr.add(new ActionTrajectory("Straight", 0, 0, false));
-		arr.add(new ActionParallelAction(new ActionDriveToGoalByWidth(150, -20.5, 1), new ActionLift(2000)));
+		//arr.add(new ActionWait(0.1));
+		arr.add(new ActionDriveToGoalByWidth(130, -20.5, 1));
 		arr.add(new ActionTurnToAngle(-20.5, false, 5.0f));
 		//arr.add(new ActionParallelAction(new ActionWait(1.2), new ActionLift(28000)));
-		arr.add(new ActionExtend(true));
-		arr.add(new ActionParallelAction(new ActionWait(0.6), new ActionDeploy(false)));
-		arr.add(new ActionParallelAction(new ActionTrajectory("Back", 0, 0, true), new ActionDelayedAction(0.5, new ActionLift(0))));
+		//arr.add(new ActionExtend(true));
+	//arr.add(new ActionParallelAction(new ActionWait(0.6), new ActionDeploy(false)));
+		arr.add(new ActionTrajectory("Back", 0, 0, true));
 		arr.add(new ActionTurnToAngle(180, false, 5.0f));
-		arr.add(new ActionDriveToGoalByWidth(300, 180, 1));
-		arr.add(new ActionDeploy(true));
+		arr.add(new ActionDriveToGoalByWidth(150, 180, 1));
+		//arr.add(new ActionDeploy(true));
 		arr.add(new ActionParallelAction(new ActionWait(0.5), new ActionLift(10000)));
 		arr.add(new ActionParallelAction(new ActionTrajectory("ForwardNew", 0, 0, true), new ActionDelayedAction(1.0, new ActionLift(0))));
+		
 		arr.add(new ActionWait(99999));
 	}
 

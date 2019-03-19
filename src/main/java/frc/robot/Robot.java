@@ -89,13 +89,12 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("NavX I", 0.00);
     SmartDashboard.putNumber("NavX D", 0.00);
 
+    //path.initTrajectories(new String[] {"Straight"});
     lift.zeroEncoders();
     navX.zeroYaw();    
 
     SmartDashboard.putNumber("NavX Divisor", 60);
 		SmartDashboard.putNumber("NavX Exponent", 0.66);
-
-    
 
     positionChooser.addOption("Left", Position.LEFT);
     positionChooser.addOption("Right", Position.RIGHT);
@@ -132,11 +131,11 @@ public class Robot extends IterativeRobot {
   @Override
   public void autonomousInit() {
 
-    intake.snipNotifier.startPeriodic(0.001);
+    //intake.snipNotifier.startPeriodic(0.001);
 
     compressor.setClosedLoopControl(false);
     compressor.stop();
-    Robot.navX.zeroYaw();
+    //Robot.navX.zeroYaw();
     autoControlA = true;
 
 
@@ -335,6 +334,7 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("NavX Yaw", navX.getYaw());
     SmartDashboard.putNumber("Right Encoder", Robot.drivebase.getRightEncoder());
     SmartDashboard.putNumber("Left Encoder", Robot.drivebase.getLeftEncoder());
+    SmartDashboard.putNumber("Right Encoder", Robot.drivebase.getLeftEncoder());
 
     int direction = Robot.camera.visionDirection;
     String status = "";

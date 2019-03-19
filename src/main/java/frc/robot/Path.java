@@ -19,9 +19,9 @@ import jaci.pathfinder.followers.EncoderFollower;
 
 public class Path {
 
-    private static final int k_ticks_per_rev = 10;
-    private static final double k_wheel_diameter = 0.333333;
-    private static final double k_max_velocity = 10;  
+    private static final int k_ticks_per_rev = 8500;
+    private static final double k_wheel_diameter = 0.5208333333;
+    private static final double k_max_velocity = 10.0;  
     
     public HashMap<String, EncoderFollower[]> trajectoryMap;
 
@@ -37,6 +37,7 @@ public class Path {
     public void initTrajectories(String[] trajectoryNames) {
         SmartDashboard.putBoolean("Trajectory Status", false);
         for (String trajectory : trajectoryNames) {
+            System.out.println("TRAJECTORY: " + trajectory);
             trajectoryMap.put(trajectory, createTrajectory(trajectory));
         }
         SmartDashboard.putBoolean("Trajectory Status", true);
@@ -44,10 +45,10 @@ public class Path {
 
     public EncoderFollower[] createTrajectory(String trajectory) { // dont be rowdy
        
-       Trajectory leftTrajectory;
-       Trajectory rightTrajectory;
+        Trajectory leftTrajectory;
+        Trajectory rightTrajectory;
 
-        try {
+            try {
             leftTrajectory = PathfinderFRC.getTrajectory("/output/" + trajectory + ".right");
             rightTrajectory = PathfinderFRC.getTrajectory("/output/" + trajectory + ".left");
             } catch (Exception e) {
@@ -55,16 +56,25 @@ public class Path {
                 leftTrajectory = null;
                 rightTrajectory = null;
             }
-        EncoderFollower leftFollower = new EncoderFollower(leftTrajectory);
-        EncoderFollower rightFollower = new EncoderFollower(rightTrajectory);
+            EncoderFollower leftFollower = new EncoderFollower(leftTrajectory);
+            EncoderFollower rightFollower = new EncoderFollower(rightTrajectory);
+
+            System.out.println("DONE FOLLOWER");
     
-        leftFollower.configureEncoder(Robot.drivebase.getLeftEncoder(), k_ticks_per_rev, k_wheel_diameter);
-        rightFollower.configureEncoder(Robot.drivebase.getRightEncoder(), k_ticks_per_rev, k_wheel_diameter);
+            leftFollower.configureEncoder(0, k_ticks_per_rev, k_wheel_diameter);
+            rightFollower.configureEncoder(0, k_ticks_per_rev, k_wheel_diameter);
+    
+            double p = SmartDashboard.getNumber("NavX P", 0.95);
+            leftFollower.configurePIDVA(p, 0, 0, 1 / 10.0, 0);
+            rightFollower.configurePIDVA(p,  0, 0, 1 / 10.0, 0);
+    
 
-        leftFollower.configurePIDVA(0.95, 0, 0, 1 / k_max_velocity, 0);
-        rightFollower.configurePIDVA(0.95, 0, 0, 1 / k_max_velocity, 0);
+            System.out.println("DONE SECOND FOLLOWER");
 
-        return new EncoderFollower[] {leftFollower, rightFollower};
+            //notifier.startPeriodic(0.02);
+
+
+            return new EncoderFollower[] {leftFollower, rightFollower};
     }
 
 

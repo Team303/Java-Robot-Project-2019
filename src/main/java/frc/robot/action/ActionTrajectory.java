@@ -18,6 +18,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 
 /**
  * Add your docs here.
@@ -36,6 +37,7 @@ import edu.wpi.first.wpilibj.DriverStation;
     private EncoderFollower rightFollower;
     private boolean isFirst = true;
 
+    private Timer trajectoryTimer;
 
     Notifier notifier;
 
@@ -53,6 +55,7 @@ import edu.wpi.first.wpilibj.DriverStation;
         this.offset = offset;
         this.turningConstant = turningConstant;
         this.reversed = reversed;
+        trajectoryTimer = new Timer();
 
         /*notifier = new Notifier(()->{
             /*leftEncoder = Robot.drivebase.getLeftEncoder();
@@ -138,6 +141,10 @@ import edu.wpi.first.wpilibj.DriverStation;
             Robot.drivebase.zeroEncoders();
             initTrajectories();
             isFirst = false;
+            trajectoryTimer.reset();
+            trajectoryTimer.start();
+            System.out.println("STARTED");
+
         }
 
 
@@ -170,10 +177,9 @@ import edu.wpi.first.wpilibj.DriverStation;
             left = 0.7 * left;
             right = 0.7 * right;
 
-            System.out.println("Left: " + left);
-            System.out.println("Left Encoder: " + leftEncoder);
-            System.out.println("Right: " + right);
-            System.out.println("Right Encoder: " + rightEncoder);
+            System.out.println(left + "    ||    " + right);
+            System.out.println("Timer: " + trajectoryTimer.get());
+
             //turn = 0;        
             if (reversed) {
                 Robot.drivebase.drive(right, left);

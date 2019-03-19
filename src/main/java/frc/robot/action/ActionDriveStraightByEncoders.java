@@ -46,8 +46,11 @@ public class ActionDriveStraightByEncoders implements Action {
 		//Return true if the current encoder value is more or equal to the distance
 		//OR return true if the time is more or equal to the timeout
 		if(timer.get()>=timeout) timer.stop();
+
+		boolean finished = Math.abs(Robot.drivebase.getLeftEncoder()-initial)>=Math.abs(distance) || timer.get() >=timeout;
+	
 		
-		return Math.abs(Robot.drivebase.getLeftEncoder()-initial)>=Math.abs(distance) || timer.get() >=timeout;
+		return finished;
 	}
 
 }

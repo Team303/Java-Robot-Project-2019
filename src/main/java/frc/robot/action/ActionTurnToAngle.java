@@ -82,7 +82,7 @@ public class ActionTurnToAngle implements Action {
 		*/
 		
 		if (Math.abs(angleToTurn) < 45){
-			errorDivisor = 28;
+			errorDivisor = 22; //28
 		}
 		else{
 			errorDivisor = 60;

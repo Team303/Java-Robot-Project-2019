@@ -13,7 +13,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 public class Camera {
 
     static final double pixelPerDegreeConstant = 0.146875;
-    public static double offsetConstant = 10;
+    public static double offsetConstant = 0;
     static final double FIELD_OF_VIEW_RAD = 70.42 * Math.PI /180.0;
     static final double FOCAL_LENGTH_PIXELS = (640 / 2) / Math.tan(FIELD_OF_VIEW_RAD / 2.0);
     

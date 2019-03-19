@@ -60,7 +60,7 @@ public class ActionDriveToGoalByWidth implements Action {
 
 
         if (desiredHeading == 180) {
-            Robot.camera.offsetConstant = 10;
+            Robot.camera.offsetConstant = 0;
         }
 
         Robot.camera.updateVision();
@@ -132,8 +132,8 @@ public class ActionDriveToGoalByWidth implements Action {
         double speed = 0.55;
         double angle = Robot.camera.getCameraDegreeOffset();
 
-        double inputSpeed = 0.42;
-        double inputSpeed2 = 0.46;
+        double inputSpeed = 0.46;
+        double inputSpeed2 = 0.52;
         double turningConstant = 0.005;
 
         if (!reachedCenter){
@@ -163,7 +163,6 @@ public class ActionDriveToGoalByWidth implements Action {
     public boolean isFinished() {
 
         boolean finished = Robot.camera.getWidth() > stopWidth;
-     
         return (Robot.camera.getWidth() > stopWidth);
     }   
     
