@@ -24,7 +24,7 @@ import edu.wpi.first.wpilibj.Timer;
  * Add your docs here.
  */
 
- public class ActionTrajectory implements Action {
+ public class ActionTrajectoryFirst implements Action {
 
     private static final int k_ticks_per_rev = 8500;
     private static final double k_wheel_diameter = 0.5208333333;
@@ -55,7 +55,7 @@ import edu.wpi.first.wpilibj.Timer;
 
     public double stopTime;
 
-    public ActionTrajectory(String trajectoryName, int offset, double turningConstant, boolean reversed) {
+    public ActionTrajectoryFirst(String trajectoryName, int offset, double turningConstant, boolean reversed) {
             this(trajectoryName, offset, turningConstant, reversed, 5.0);
 
         /*notifier = new Notifier(()->{
@@ -112,13 +112,14 @@ import edu.wpi.first.wpilibj.Timer;
         });*/
     }
 
-    public ActionTrajectory(String trajectoryName, int offset, double turningConstant, boolean reversed, double stopTime) {
+    public ActionTrajectoryFirst(String trajectoryName, int offset, double turningConstant, boolean reversed, double stopTime) {
         trajectory = trajectoryName;
         this.offset = offset;
         this.turningConstant = turningConstant;
         this.reversed = reversed;
         trajectoryTimer = new Timer();
         this.stopTime = stopTime;
+        this.firstEncoder = false;
     
     }
 
@@ -153,7 +154,6 @@ import edu.wpi.first.wpilibj.Timer;
 
             leftFollower = Robot.path.trajectoryMap.get(trajectory)[0];
             rightFollower = Robot.path.trajectoryMap.get(trajectory)[1];
-            Robot.drivebase.zeroEncoders();
             trajectoryTimer.reset();
             trajectoryTimer.start();
             System.out.println("STARTED");
@@ -162,12 +162,24 @@ import edu.wpi.first.wpilibj.Timer;
 
             leftEncoder = Robot.drivebase.getLeftEncoder();
             rightEncoder = Robot.drivebase.getRightEncoder();
+
+            if (!firstEncoder && trajectoryTimer.get() >= 0.3) {
+                System.out.println("ZERO");
+                
+                initialLeftEncoder = leftEncoder;
+                initialRightEncoder = rightEncoder;
+                System.out.println("Left: " + initialLeftEncoder);
+                System.out.println("Right: " + initialRightEncoder);
+                firstEncoder = true;
+            }
     
             if (reversed) {
                 leftEncoder = -Robot.drivebase.getRightEncoder();
                 rightEncoder = -Robot.drivebase.getLeftEncoder();
             }
 
+            leftEncoder = leftEncoder - initialLeftEncoder;
+            rightEncoder = rightEncoder - initialRightEncoder;
 
             double leftSpeed = leftFollower.calculate(leftEncoder);
             double rightSpeed = rightFollower.calculate(rightEncoder);
@@ -188,13 +200,18 @@ import edu.wpi.first.wpilibj.Timer;
             left = 0.7 * left;
             right = 0.7 * right;
 
-      
+            System.out.println(left + "    ||    " + right);
+            System.out.println("Actual: " +  Robot.drivebase.getLeftEncoder());
+            System.out.println("Adjusted: " + leftEncoder);
+            System.out.println("Time: " + trajectoryTimer.get());
+
             //turn = 0;        
             if (reversed) {
                 Robot.drivebase.drive(right, left);
-            } else {
+            } else if (trajectoryTimer.get() >= 0.3){
                 Robot.drivebase.drive(left, right);
             }
+        
     }
 
     public boolean isFinished() {

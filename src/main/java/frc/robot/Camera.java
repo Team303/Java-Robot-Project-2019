@@ -13,7 +13,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 public class Camera {
 
     static final double pixelPerDegreeConstant = 0.146875;
-    public static double offsetConstant = 0;
+    public double offsetConstant = 20; //-8
     static final double FIELD_OF_VIEW_RAD = 70.42 * Math.PI /180.0;
     static final double FOCAL_LENGTH_PIXELS = (640 / 2) / Math.tan(FIELD_OF_VIEW_RAD / 2.0);
     
@@ -27,7 +27,7 @@ public class Camera {
     static NetworkTableInstance inst;
     static NetworkTable visionTable;
     private static NetworkTableEntry visionStringArrEntry;
-    public boolean dumbVision = false;
+    public boolean lessOffset = false;
     public boolean leftBtn = false;
 
     public boolean turnConfirmed = false;
@@ -45,6 +45,8 @@ public class Camera {
     }
     
     public void updateVision() {
+
+        double offset = SmartDashboard.getNumber("Offset Constant", 10);
      
         if (visionDirection == 2 && getDesiredHeading(false) != 0 & !turnConfirmed) {
             if (distToCenter > 0) {
@@ -72,7 +74,12 @@ public class Camera {
         
         if (visionArr.length == 2 && (visionArr[1][0] - visionArr[0][1] != 0)) {
             double centerX = (visionArr[0][1] + visionArr[1][0]) /2;
-            centerX = centerX + offsetConstant;
+            double offsetChange = 15;
+            if (lessOffset) {
+                offsetChange = 6;
+            }
+
+            centerX = centerX + offsetChange;
             width = visionArr[1][0] - visionArr[0][1];
             distToCenter = centerX - 320;
             distance = 4400 / width;

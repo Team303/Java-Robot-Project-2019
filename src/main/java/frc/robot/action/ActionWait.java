@@ -22,8 +22,8 @@ public class ActionWait  implements Action{
 			firstRun = false;
 			t.start();
         }
-        
-        Robot.drivebase.drive(0,0);
+        //Robot.drivebase.zeroEncoders();
+        //Robot.drivebase.drive(0,0);
 	}
 
 	@Override

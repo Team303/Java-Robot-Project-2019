@@ -50,11 +50,11 @@ public class Intake {
     public Intake() {
         //prac is 1,2,3,4
         //comp is 4,5
-        deploy1 = new Solenoid(4);
-        //deploy2 = new Solenoid(1);
+        deploy1 = new Solenoid(1);
+        deploy2 = new Solenoid(2);
     
-        extend1 = new Solenoid(5);
-        //extend2 = new Solenoid(3);
+        extend1 = new Solenoid(3);
+        extend2 = new Solenoid(4);
 
         wrist = new CANSparkMax(8, MotorType.kBrushless);
         //cargoIntake = new PWMTalonSRX(1);
@@ -90,8 +90,9 @@ public class Intake {
                 }
     
                 extend(true);
+                //0.05
     
-                if (snipTimer.get() > 0.05 && started) {
+                if (snipTimer.get() > 0.26 && started) {
                     deploy(true);
                     snipNotifier.stop();
                     snipSnipped = true;
@@ -102,17 +103,19 @@ public class Intake {
     }
 
     public void deploy(boolean state) {
+        //System.out.println("Called Deploy");
         deploy1.set(state);
-       // deploy2.set(state);
+        deploy2.set(state);
     }
-
     public void zeroWristEncoder() {
         wristEncoder.setPosition(0);
     }
 
     public void extend(boolean state) {
+        //System.out.println("Called Extend");
+
         extend1.set(state);
-       // extend2.set(state);
+        extend2.set(state);
     }
 
     public void setCargoIntake(double power) {
@@ -145,20 +148,26 @@ public class Intake {
 
         if (OI.lBtn[2]) {
             extend(true);
+            deploy(false);
         } else if (OI.lBtn[5]){
             extend(false);
+            deploy(false);
         }
  
-        if (OI.rBtn[2] || OI.lBtn[1]) {
+        if (OI.rBtn[2] ) {
             deploy(true); 
-        } else if (OI.rBtn[5] || OI.rBtn[1]) {
+        } else if (OI.rBtn[5]) {
             deploy(false);
         }
 
         if (OI.lBtn[1]) {
             setCargoIntake(0.7);
+            deploy(false);
+            extend(false);
         } else if (OI.rBtn[1]) {
-            setCargoIntake(-0.7);    
+            setCargoIntake(-0.7);
+            deploy(false);    
+            extend(false);
         } else {
             setCargoIntake(0);
         }

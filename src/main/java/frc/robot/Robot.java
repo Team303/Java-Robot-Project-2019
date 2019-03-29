@@ -5,6 +5,8 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+//CORRECT VERSION
+
 package frc.robot;
 
 import com.revrobotics.CANSparkMax;
@@ -27,6 +29,9 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import com.revrobotics.CANSparkMax;
 import frc.robot.action.ActionWait;
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
 
 
 /**
@@ -88,13 +93,19 @@ public class Robot extends IterativeRobot {
     SmartDashboard.putNumber("NavX P", 0.65019);
     SmartDashboard.putNumber("NavX I", 0.00);
     SmartDashboard.putNumber("NavX D", 0.00);
-
+    
+    SmartDashboard.putNumber("Offset Constant", 5);
+    SmartDashboard.putNumber("Back Climber Power", 0.5);
+    SmartDashboard.putBoolean("Preload Hatch", true);
+    SmartDashboard.putNumber("Back kP", 0.04);
     //path.initTrajectories(new String[] {"Straight"});
     lift.zeroEncoders();
     navX.zeroYaw();    
 
     SmartDashboard.putNumber("NavX Divisor", 60);
 		SmartDashboard.putNumber("NavX Exponent", 0.66);
+    SmartDashboard.putNumber("Climber Tuning Constant", 0.01);
+
 
     positionChooser.addOption("Left", Position.LEFT);
     positionChooser.addOption("Right", Position.RIGHT);
@@ -105,7 +116,15 @@ public class Robot extends IterativeRobot {
     }
 
     SmartDashboard.putData("Position", positionChooser);
-		SmartDashboard.putData("Auto", autoChooser);
+    SmartDashboard.putData("Auto", autoChooser);
+    
+    path.initTrajectories(new String[] {"StraightLeft", "Back", "ForwardNew", "Return", "StraightRightNew", "BackRight", "ReturnTwo"});
+
+    SmartDashboard.putBoolean("Zero NavX", false);
+
+    CameraServer.getInstance().startAutomaticCapture();
+    CvSink cvSink = CameraServer.getInstance().getVideo();
+    CvSource outputStream = CameraServer.getInstance().putVideo("Video", 640, 480);
 
   }
 
@@ -121,6 +140,11 @@ public class Robot extends IterativeRobot {
       lift.setSetpoint(0);
       intake.zeroWristEncoder();
       intake.setWristSetpoint(0);
+      climber.zeroEncoders();
+    }
+
+    if (SmartDashboard.getBoolean("Zero NavX", false)) {
+      navX.zeroYaw();
     }
 
 
@@ -131,7 +155,8 @@ public class Robot extends IterativeRobot {
   @Override
   public void autonomousInit() {
 
-    //intake.snipNotifier.startPeriodic(0.001);
+    boolean preload = SmartDashboard.putBoolean("Preload Hatch", true);
+   //  if(preload) {intake.snipNotifier.startPeriodic(0.001);}
 
     compressor.setClosedLoopControl(false);
     compressor.stop();
@@ -185,7 +210,7 @@ public class Robot extends IterativeRobot {
     else if (selected == Auto.DRIVER_CONTROL) {autoControlA = false;}
     else if (selected == Auto.ONE_HATCH) {}
     else if (selected == Auto.TWO_HATCH) {}
-    else if (selected == Auto.ONE_ROCKET) {}  
+    else if (selected == Auto.TWO_ROCKET) {auto.assembleTwoRocketHatchRight();}  
     auto.arr.add(new ActionWait(9999));
 
     //HUE: 34-182
@@ -203,7 +228,7 @@ public class Robot extends IterativeRobot {
     updateDashboard();
     OI.update();
 
-    if ((OI.xBtnA || OI.rTrigger) && autoControlA) {
+    if ((OI.xBtnA || OI.lBtn[7]) && autoControlA) {
       auto.stopAuto();
       autoControlA = false;
     } 
@@ -291,17 +316,31 @@ public class Robot extends IterativeRobot {
       if (navXControl) {
         navXControl = false;
       }
+
+
       if ((Math.abs(OI.leftY) > 0.1) || (Math.abs(OI.rightY) > 0.1)) {
         drivebase.drive(adjustment * lDrivePower,  adjustment * rDrivePower);
-      } else {
+      } else if (OI.rPov == 0) {
+        drivebase.drive(0.25, 0.25);
+      } else if (OI.rPov == 180) {
+        drivebase.drive(-0.25, -0.25);
+      } else if (OI.rPov == 90) {
+        drivebase.drive(0.25, -0.25);
+      } else if (OI.rPov == 270) {
+        drivebase.drive(-0.25, 0.25);
+      }else {
        drivebase.drive(0,0);
       }
+
+
     } else {
       navXControl = true;
       if (pulse(navXControl)) {
-        navX.setSetpoint(20);
-        navX.turnController.enable();
+        //navX.setSetpoint(20);
+        //navX.turnController.enable();
       }
+
+      
 
       double output = navX.getPidOutput();
       drivebase.drive(-output, output);
@@ -331,7 +370,9 @@ public class Robot extends IterativeRobot {
 
 
   public void updateDashboard() {
+    SmartDashboard.putNumber("NavX Pitch", navX.getPitch());
     SmartDashboard.putNumber("NavX Yaw", navX.getYaw());
+
     SmartDashboard.putNumber("Right Encoder", Robot.drivebase.getRightEncoder());
     SmartDashboard.putNumber("Left Encoder", Robot.drivebase.getLeftEncoder());
     SmartDashboard.putNumber("Right Encoder", Robot.drivebase.getLeftEncoder());

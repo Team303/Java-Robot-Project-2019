@@ -48,7 +48,9 @@ public class ActionDriveStraightByEncoders implements Action {
 		if(timer.get()>=timeout) timer.stop();
 
 		boolean finished = Math.abs(Robot.drivebase.getLeftEncoder()-initial)>=Math.abs(distance) || timer.get() >=timeout;
-	
+		if (finished){
+			Robot.drivebase.drive(0, 0);
+		}
 		
 		return finished;
 	}

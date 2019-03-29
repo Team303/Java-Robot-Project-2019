@@ -49,7 +49,9 @@ public class NavX implements PIDOutput { //this class controls the PID for the n
 	public double getYaw() {
 		return navX.getYaw();
 	}
-
+	public double getPitch() {
+		return navX.getPitch();
+	}
 	public void zeroYaw() {
 		//originalHeading = originalHeading + getYaw();
 		navX.zeroYaw();

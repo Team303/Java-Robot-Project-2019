@@ -11,94 +11,106 @@ import com.revrobotics.ControlType;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.revrobotics.CANEncoder;
 import com.revrobotics.CANPIDController;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-
+ 
 /**
  * Add your docs here.
  */
 public class Climber {
 
     private Solenoid climberFront;
-    private Solenoid climberBack;
+    private CANSparkMax climberBack;
     private boolean climberDown; 
-    private WPI_TalonSRX tractor;
+    private CANEncoder backEncoder; 
+
+    private static final double PITCH_CONSTANT = 0.01;
+
+
+    
     private Timer deployTimer;
     private boolean deployed = false;
 
     public Climber() {
         climberFront = new Solenoid(RobotMap.CLIMBER_FRONT);
-        climberBack = new Solenoid(RobotMap.CLIMBER_BACK);
-
-        tractor = new WPI_TalonSRX(RobotMap.CLIMBER_TRACTOR);
-        tractor.setInverted(RobotMap.CLIMBER_TRACTOR_INV);
-
+        climberBack = new CANSparkMax(RobotMap.CLIMBER_BACK, MotorType.kBrushless);
         deployTimer = new Timer();
+
+        backEncoder = climberBack.getEncoder();
+
+        backEncoder.setPositionConversionFactor(1000);
     }
 
     public void setFront(boolean state) {
         climberFront.set(state);
     }
 
-    public void setBack(boolean state) {
-        climberBack.set(state);
+    public void setBack(double power) {
+        climberBack.set(power);
     }   
 
-    public void setTractor(double power) {
-        tractor.set(ControlMode.PercentOutput, power);
+
+    public void zeroEncoders() {
+        climberBack.setEncPosition(0);
     }
+
+
 
     public void control() {
        
-        if (OI.xRightTrigger >= 0.75) {
-            climberDown = true;
-            if (OI.xBtnStart) {
-                if (!deployed) {
-                    setBack(true);
-                    deployTimer.reset();
-                    deployTimer.start();
-                    deployed = true;
-                    SmartDashboard.putBoolean("Time On", false);
-                }
+        double power = SmartDashboard.getNumber("Back Climber Power", 0.5);
+        double pitchConstant = SmartDashboard.getNumber("Climber Tuning Constant", 0.01);
+        SmartDashboard.putNumber("Back Encoder", backEncoder.getPosition());
 
 
-                if (deployTimer.get() > 0.2 && deployed == true) {
-                    setFront(true);
-                    SmartDashboard.putBoolean("Time On", true);
-                }
-            } 
-            
-            if (OI.xLeftBumper) {
-                setFront(false);
-                setBack(true);
-                deployed = false;
-            }
+        double pitch = Robot.navX.getPitch() - 2;
+    
 
-            if (OI.xRightBumper) {
-                setFront(false);
-                setBack(false);
-            }
-        } else {
-            climberDown = false;
+        double powerAdjust = 0;
+
+        if (Math.abs(pitch) >= 2.5) {
+            powerAdjust = -pitch * pitchConstant;
         }
+
+        SmartDashboard.putNumber("Power Adjust", powerAdjust);
+
+
+        //-66906
         
-
-        if(climberDown) {
-            setTractor(OI.leftY);
-        } else {
-            setTractor(0);
+        //If pitch is negative, decrease  power
+            
+        if (OI.xBtnBack) {
+            setFront(false);
         }
 
-        if (OI.lBtn[2]) {
-            setBack(false);
-        } 
+
+        double stopPoint = -77200;
+        double kP = SmartDashboard.getNumber("Back kP", 0.04);
 
         if (OI.lBtn[3]) {
-            setBack(false);
-        } 
+            setBack(0.5);
+        } else if (OI.lBtn[4]) {
+            setBack(-0.5);
+        } else if (OI.xBtnStart && backEncoder.getPosition() >= (stopPoint + 2500)) {
+            setFront(true);
+            setBack(-power + powerAdjust);
+            System.out.println("Back Power: " +  climberBack.get());
+        } else if (OI.xBtnStart && backEncoder.getPosition() <= (stopPoint + 2500)) {
+            double error = stopPoint - backEncoder.getPosition();
+            setBack(-error * kP);
+            System.out.println("Back Power: " +  climberBack.get());
+        } else {
+            setBack(0);
+        }
+
+
+        SmartDashboard.putNumber("Back Power", -power + powerAdjust);
+
+
 
     }
 }

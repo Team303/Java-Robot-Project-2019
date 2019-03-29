@@ -1,5 +1,6 @@
 package frc.robot.action;
 import frc.robot.Robot;
+import edu.wpi.first.wpilibj.Timer;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -13,12 +14,18 @@ public class ActionTurnToAngle implements Action {
 	float tolerance;
 	boolean pivot;
 	double pivotPower;
+	double timeout = 2.0;
 	boolean pivotDirection;
 	//we added these two things today 
 	double angleToTurn = 180;
 	double errorDivisor;
+	Timer timer;
 	
 	public ActionTurnToAngle(double setpoint, boolean relative, float tolerance) { //pivot is assumed false
+		this(setpoint, relative, tolerance, false, 1, false);
+	}
+
+	public ActionTurnToAngle(double setpoint, boolean relative, float tolerance, double timeout) { //pivot is assumed false
 		this(setpoint, relative, tolerance, false, 1, false);
 	}
 	
@@ -31,10 +38,18 @@ public class ActionTurnToAngle implements Action {
 		this.pivot = pivot;
 		this.pivotPower = pivotPower;
 		this.pivotDirection = pivotDirection;
+		timer = new Timer();
+		this.timeout = 2.0;
 	}
 	
 	@Override
 	public void run() {
+
+		if (firstRun) {
+			timer.reset();
+			timer.start();
+			firstRun = false;
+		}
 		
 		/*if(firstRun) {
 			double theta = Robot.navX.getYaw();
@@ -142,7 +157,7 @@ public class ActionTurnToAngle implements Action {
 		}
 
 		SmartDashboard.putBoolean("End", end);
-		boolean end3 = Math.abs(Math.abs(angleToTurn) - Math.abs(yaw)) <= tolerance;		
+		boolean end3 = (Math.abs(Math.abs(angleToTurn) - Math.abs(yaw)) <= tolerance) || (timer.get() >= timeout);		
 
 		return end3;
 	}

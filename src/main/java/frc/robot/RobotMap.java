@@ -42,7 +42,7 @@ public class RobotMap {
 
     //Don't know the ID's of this yet
     public static final int CLIMBER_FRONT = 7;
-    public static final int CLIMBER_BACK = 6;
+    public static final int CLIMBER_BACK = 15;
     public static final int CLIMBER_TRACTOR = 9;
     public static final boolean CLIMBER_TRACTOR_INV = false;
 
@@ -50,7 +50,7 @@ public class RobotMap {
     public static final int MID_ROCKET_SETPOINT = 36094;
     public static final int HIGH_ROCKET_SETPOINT = 55857;
 
-    public static final int LOW_HATCH_SETPOINT = 1800;
+    public static final int LOW_HATCH_SETPOINT = 1500;
     public static final int MID_HATCH_SETPOINT = 29142;
     public static final int HIGH_HATCH_SETPOINT = 50000;
 

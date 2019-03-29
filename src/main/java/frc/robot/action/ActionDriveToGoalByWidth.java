@@ -17,6 +17,12 @@ public class ActionDriveToGoalByWidth implements Action {
     static boolean reachedCenter = false;
     double distanceToCenter, desiredHeading, width, distance, initialHeading;
     int direction = -1;
+    private boolean loadingStation = false;
+
+    private static final double A = -0.000042217484;
+    private static final double B = 0.003231589;
+    private static final double C = 0.58142857;
+
 
     
     public ActionDriveToGoalByWidth(int stopWidth, double desiredHeading) {
@@ -25,6 +31,10 @@ public class ActionDriveToGoalByWidth implements Action {
 
 
     public ActionDriveToGoalByWidth(int stopWidth, double desiredHeading, int direction) {
+        this(stopWidth, desiredHeading, direction, false);
+    }
+
+    public ActionDriveToGoalByWidth(int stopWidth, double desiredHeading, int direction, boolean loadingStation) {
         firstRun = true;
         this.stopWidth = stopWidth;
         this.desiredHeading = desiredHeading;
@@ -32,6 +42,7 @@ public class ActionDriveToGoalByWidth implements Action {
         countTimer = new Timer();
         turnTimer = new Timer();
         this.direction = direction;
+        this.loadingStation = loadingStation;
         firstRun = true;
     }
     
@@ -57,11 +68,7 @@ public class ActionDriveToGoalByWidth implements Action {
         }
 
         SmartDashboard.putNumber("ABC Desired Heading",  desiredHeading);
-
-
-        if (desiredHeading == 180) {
-            Robot.camera.offsetConstant = 0;
-        }
+        Robot.camera.lessOffset = false;
 
         Robot.camera.updateVision();
         double currentHeading = Robot.navX.getYaw();
@@ -80,6 +87,8 @@ public class ActionDriveToGoalByWidth implements Action {
         }
 
 
+
+
         double differenceInHeading = currentHeading - desiredHeading;
         distanceToCenter = Robot.camera.getCentDist();
         double pixelOffset = Robot.camera.getPixelOffset(differenceInHeading);
@@ -91,23 +100,19 @@ public class ActionDriveToGoalByWidth implements Action {
         double[] visionParameters = new double[4];
 
         if (Math.abs(distanceToCenter) >= 170) {
-            visionParameters = new double[] {18, 0, 0, 0};
-        } else if (Math.abs(distanceToCenter) >= 127) {
-            visionParameters = new double[] {18, 0, 0, 0};
-        } else if (Math.abs(distanceToCenter) >= 100) {
-            visionParameters = new double[] {16, 0, 0, 0};
-        } else if (Math.abs(distanceToCenter) >= 70) {
             visionParameters = new double[] {15, 0, 0, 0};
-        } else if (Math.abs(distanceToCenter) >= 45) {
+        } else if (Math.abs(distanceToCenter) >= 127) {
+            visionParameters = new double[] {13, 0, 0, 0};
+        } else if (Math.abs(distanceToCenter) >= 100) {
+            visionParameters = new double[] {13, 0, 0, 0};
+        } else if (Math.abs(distanceToCenter) >= 70) {
             visionParameters = new double[] {12, 0, 0, 0};
+        } else if (Math.abs(distanceToCenter) >= 45) {
+            visionParameters = new double[] {10, 0, 0, 0};
         } else {
             visionParameters = new double[] {8, 0, 0, 0};
         }
-        if (desiredHeading == 180) {
-            System.out.println("DIST TO CENT: " + distanceToCenter);
-            System.out.println("NUM VALID: " + Robot.camera.numValid);
-            System.out.println("WIDTH: " + Robot.camera.getWidth());
-        }
+    
 
 
         double A = visionParameters[0];
@@ -119,8 +124,8 @@ public class ActionDriveToGoalByWidth implements Action {
         initialHeading = A + (B * X)  + (C * pow(X, 2)) + (D * pow(X, 3));
         initialHeading = Math.copySign(initialHeading, distanceToCenter);
 
-        double threshold = 45;
-        if ((Math.abs(distanceToCenter) <= threshold || Robot.camera.getWidth() >= 82) && !reachedCenter) {
+        double threshold = 40;
+        if ((Math.abs(distanceToCenter) <= threshold || Robot.camera.getWidth() >= 73) && !reachedCenter) {
             reachedCenter = true;
             turnTimer.reset();
             turnTimer.start();
@@ -132,8 +137,8 @@ public class ActionDriveToGoalByWidth implements Action {
         double speed = 0.55;
         double angle = Robot.camera.getCameraDegreeOffset();
 
-        double inputSpeed = 0.46;
-        double inputSpeed2 = 0.52;
+        double inputSpeed = 0.55;
+        double inputSpeed2 = 0.6;
         double turningConstant = 0.005;
 
         if (!reachedCenter){
@@ -149,11 +154,35 @@ public class ActionDriveToGoalByWidth implements Action {
         SmartDashboard.putNumber("Width", width);
         SmartDashboard.putNumber("Distance To Center", distanceToCenter);
         SmartDashboard.putNumber("Difference In Heading", differenceInHeading);
+        SmartDashboard.putNumber("Angle", angle);
 
-        double[] pow = Action.driveStraight(speed, angle, turningConstant);
+        double scaledPower = (A * pow(width, 2)) + (B * width) + C;
+
+        scaledPower = 0.5;
+
+        if (Math.abs(width) <= 60) {
+            scaledPower = 0.55;
+        } else if (Math.abs(width) <= 70) {
+            scaledPower = 0.55;
+        } else if (Math.abs(width) <= 80) {
+            scaledPower = 0.5;
+        } else if (Math.abs(width) <= 90) {
+            scaledPower = 0.46;
+        } else if (Math.abs(width) <= 100) {
+            scaledPower = 0.43;
+        } else if (Math.abs(width) <= 110) {
+            scaledPower = 0.4;
+        }else if (Math.abs(width) <= 120) {
+            scaledPower = 0.4;
+        }else {
+            scaledPower = 0.4;
+        }
+
+
+        double[] pow = Action.driveStraight(scaledPower, angle, turningConstant);
         Robot.drivebase.drive(pow[0], pow[1]);
 
-        if (desiredHeading == 0 && Robot.camera.leftBtn) {
+        if (desiredHeading == 0 && (Robot.camera.leftBtn || loadingStation)) {
             desiredHeading = 180;
         }
     
